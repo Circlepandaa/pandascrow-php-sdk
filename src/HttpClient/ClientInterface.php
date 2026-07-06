@@ -65,9 +65,7 @@ interface ClientInterface
     public function request(string $method, string $uri, array $options = []): array;
 
     /**
-     * Get the last response headers
-     *
-     * @return array<string, string>
+     * @return array<string, string[]>
      */
     public function getLastHeaders(): array;
 

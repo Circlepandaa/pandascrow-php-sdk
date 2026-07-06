@@ -33,6 +33,10 @@ class Config
         $this->apiVersion = null;
 
         if (is_array($apiKey)) {
+            // Check for api_key before parsing
+            if (!isset($apiKey['api_key']) || $apiKey['api_key'] === '') {
+                throw new ConfigurationException('API key is required');
+            }
             /** @var array{api_key: string, api_secret?: string, sandbox?: bool, timeout?: int, retries?: int, debug?: bool, headers?: array<string, string>, api_version?: string, base_url?: string} $apiKey */
             $this->parseConfigArray($apiKey);
         } else {
@@ -55,9 +59,6 @@ class Config
      */
     private function parseConfigArray(array $config): void
     {
-        if (!isset($config['api_key']) || $config['api_key'] === '') {
-            throw new ConfigurationException('API key is required');
-        }
         $this->apiKey = $config['api_key'];
         $this->apiSecret = $config['api_secret'] ?? null;
         $this->isSandbox = $config['sandbox'] ?? true;

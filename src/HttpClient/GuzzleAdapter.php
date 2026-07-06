@@ -25,7 +25,7 @@ class GuzzleAdapter implements ClientInterface
     private GuzzleClient $client;
     private Config $config;
     private LoggerInterface $logger;
-    /** @var array<string, string> */
+    /** @var array<string, string[]> */
     private array $lastHeaders = [];
     private int $lastStatusCode = 0;
     private ?string $authToken = null;
@@ -193,8 +193,9 @@ class GuzzleAdapter implements ClientInterface
             $response = $this->client->request($method, $uri, $options);
 
             $this->lastStatusCode = $response->getStatusCode();
-            /** @var array<string, string> $headers */
+            /** @var array<string, string[]> $headers */
             $headers = $response->getHeaders();
+
             $this->lastHeaders = $headers;
 
             $responseBody = (string) $response->getBody();
@@ -251,22 +252,24 @@ class GuzzleAdapter implements ClientInterface
     }
 
     /**
-     * @param array<string, string|array<string>> $headers
-     * @return array<string, string|array<string>>
+     * @param array<string, string|string[]> $headers
+     * @return array<string, string|string[]>
      */
     private function sanitizeHeaders(array $headers): array
     {
         $sensitive = ['authorization', 'x-api-key', 'cookie'];
+
         foreach ($headers as $key => $value) {
-            if (in_array(strtolower((string) $key), $sensitive, true)) {
+            if (in_array(strtolower($key), $sensitive, true)) {
                 $headers[$key] = '***REDACTED***';
             }
         }
+
         return $headers;
     }
 
     /**
-     * @return array<string, string>
+     * @return array<string, string[]>
      */
     public function getLastHeaders(): array
     {
