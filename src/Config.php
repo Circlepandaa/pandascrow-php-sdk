@@ -15,16 +15,16 @@ class Config
     private int $timeout;
     private int $retries;
     private bool $debug;
+    /** @var array<string, string> */
     private array $headers;
     private ?string $apiVersion;
 
     /**
-     * @param string|array $apiKey API key or configuration array
-     * @param array $options Additional options
+     * @param string|array{api_key: string, api_secret?: string, sandbox?: bool, timeout?: int, retries?: int, debug?: bool, headers?: array<string, string>, api_version?: string, base_url?: string} $apiKey
+     * @param array{sandbox?: bool, timeout?: int, retries?: int, debug?: bool, headers?: array<string, string>, api_version?: string, base_url?: string, api_secret?: string} $options
      */
     public function __construct(string|array $apiKey, array $options = [])
     {
-        // Default values
         $this->isSandbox = true;
         $this->timeout = 30;
         $this->retries = 0;
@@ -33,6 +33,7 @@ class Config
         $this->apiVersion = null;
 
         if (is_array($apiKey)) {
+            /** @var array{api_key: string, api_secret?: string, sandbox?: bool, timeout?: int, retries?: int, debug?: bool, headers?: array<string, string>, api_version?: string, base_url?: string} $apiKey */
             $this->parseConfigArray($apiKey);
         } else {
             $this->apiKey = $apiKey;
@@ -45,15 +46,19 @@ class Config
             $this->apiVersion = $options['api_version'] ?? null;
         }
 
-        // Set base URL after sandbox is determined
         $this->baseUrl = $options['base_url'] ?? $this->getDefaultBaseUrl();
-
         $this->validate();
     }
 
+    /**
+     * @param array{api_key: string, api_secret?: string, sandbox?: bool, timeout?: int, retries?: int, debug?: bool, headers?: array<string, string>, api_version?: string, base_url?: string} $config
+     */
     private function parseConfigArray(array $config): void
     {
-        $this->apiKey = $config['api_key'] ?? throw new ConfigurationException('API key is required');
+        if (empty($config['api_key'])) {
+            throw new ConfigurationException('API key is required');
+        }
+        $this->apiKey = $config['api_key'];
         $this->apiSecret = $config['api_secret'] ?? null;
         $this->isSandbox = $config['sandbox'] ?? true;
         $this->timeout = $config['timeout'] ?? 30;
@@ -73,15 +78,15 @@ class Config
 
     private function validate(): void
     {
-        if (empty($this->apiKey)) {
+        if ($this->apiKey === '') {
             throw new ConfigurationException('API key cannot be empty');
         }
 
-        if (!is_int($this->timeout) || $this->timeout < 1) {
+        if ($this->timeout < 1) {
             throw new ConfigurationException('Timeout must be a positive integer');
         }
 
-        if (!is_int($this->retries) || $this->retries < 0) {
+        if ($this->retries < 0) {
             throw new ConfigurationException('Retries must be a non-negative integer');
         }
     }
@@ -126,6 +131,9 @@ class Config
         $this->debug = $debug;
     }
 
+    /**
+     * @return array<string, string>
+     */
     public function getHeaders(): array
     {
         return $this->headers;

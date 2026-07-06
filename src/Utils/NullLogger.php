@@ -6,18 +6,60 @@ namespace Pandascrow\Utils;
 
 use Pandascrow\Contracts\LoggerInterface;
 
-/**
- * Null logger that does nothing (useful for disabling logging)
- */
 class NullLogger implements LoggerInterface
 {
+    /**
+     * @param string $message
+     * @param array<mixed> $context
+     */
     public function emergency(string $message, array $context = []): void {}
+
+    /**
+     * @param string $message
+     * @param array<mixed> $context
+     */
     public function alert(string $message, array $context = []): void {}
+
+    /**
+     * @param string $message
+     * @param array<mixed> $context
+     */
     public function critical(string $message, array $context = []): void {}
+
+    /**
+     * @param string $message
+     * @param array<mixed> $context
+     */
     public function error(string $message, array $context = []): void {}
+
+    /**
+     * @param string $message
+     * @param array<mixed> $context
+     */
     public function warning(string $message, array $context = []): void {}
+
+    /**
+     * @param string $message
+     * @param array<mixed> $context
+     */
     public function notice(string $message, array $context = []): void {}
+
+    /**
+     * @param string $message
+     * @param array<mixed> $context
+     */
     public function info(string $message, array $context = []): void {}
+
+    /**
+     * @param string $message
+     * @param array<mixed> $context
+     */
     public function debug(string $message, array $context = []): void {}
+
+    /**
+     * @param string $level
+     * @param string $message
+     * @param array<mixed> $context
+     */
     public function log($level, string $message, array $context = []): void {}
 }

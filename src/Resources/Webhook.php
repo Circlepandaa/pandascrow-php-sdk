@@ -25,9 +25,9 @@ class Webhook extends BaseResource
 
     /**
      * Register a new webhook endpoint
-     * 
-     * @param array $data Webhook data (url, events, etc.)
-     * @return array Webhook registration response
+     *
+     * @param array{url: string, events: list<string>, description?: string, secret?: string} $data
+     * @return array<mixed>
      */
     public function register(array $data): array
     {
@@ -37,9 +37,9 @@ class Webhook extends BaseResource
 
     /**
      * Get webhook details by ID
-     * 
+     *
      * @param string $webhookId Webhook ID
-     * @return array Webhook details
+     * @return array<mixed>
      */
     public function getWebhook(string $webhookId): array
     {
@@ -48,9 +48,9 @@ class Webhook extends BaseResource
 
     /**
      * List all webhook endpoints
-     * 
-     * @param array $filters Filter parameters
-     * @return array List of webhooks
+     *
+     * @param array{status?: string, event?: string} $filters
+     * @return array<mixed>
      */
     public function listWebhooks(array $filters = []): array
     {
@@ -59,10 +59,10 @@ class Webhook extends BaseResource
 
     /**
      * Update a webhook endpoint
-     * 
+     *
      * @param string $webhookId Webhook ID
-     * @param array $data Update data
-     * @return array Updated webhook
+     * @param array{url?: string, events?: list<string>, description?: string, secret?: string} $data
+     * @return array<mixed>
      */
     public function updateWebhook(string $webhookId, array $data): array
     {
@@ -71,9 +71,9 @@ class Webhook extends BaseResource
 
     /**
      * Delete a webhook endpoint
-     * 
+     *
      * @param string $webhookId Webhook ID
-     * @return array Deletion response
+     * @return array<mixed>
      */
     public function deleteWebhook(string $webhookId): array
     {
@@ -82,10 +82,10 @@ class Webhook extends BaseResource
 
     /**
      * Get webhook events
-     * 
+     *
      * @param string $webhookId Webhook ID
-     * @param array $filters Filter parameters
-     * @return array List of webhook events
+     * @param array{status?: string, date_from?: string, date_to?: string} $filters
+     * @return array<mixed>
      */
     public function getEvents(string $webhookId, array $filters = []): array
     {
@@ -94,9 +94,9 @@ class Webhook extends BaseResource
 
     /**
      * Get webhook delivery status
-     * 
+     *
      * @param string $eventId Event ID
-     * @return array Delivery status
+     * @return array<mixed>
      */
     public function getDeliveryStatus(string $eventId): array
     {
@@ -105,9 +105,9 @@ class Webhook extends BaseResource
 
     /**
      * Resend a failed webhook event
-     * 
+     *
      * @param string $eventId Event ID to resend
-     * @return array Resend response
+     * @return array<mixed>
      */
     public function resend(string $eventId): array
     {
@@ -116,12 +116,12 @@ class Webhook extends BaseResource
 
     /**
      * Parse and verify incoming webhook payload
-     * 
+     *
      * @param string $payload Raw webhook payload (JSON string)
      * @param string $signature Signature header value
      * @param string $secret Webhook secret
      * @param int $tolerance Tolerance in seconds for timestamp validation
-     * @return array Parsed webhook data
+     * @return array<string, mixed>
      * @throws WebhookException
      */
     public function parse(
@@ -130,11 +130,11 @@ class Webhook extends BaseResource
         string $secret,
         int $tolerance = 300
     ): array {
-        // Validate signature
         if (!$this->signatureValidator->validate($payload, $signature, $secret, $tolerance)) {
             throw new WebhookException('Invalid webhook signature');
         }
 
+        /** @var array<string, mixed> $data */
         $data = json_decode($payload, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new WebhookException('Invalid JSON payload: ' . json_last_error_msg());
@@ -150,7 +150,7 @@ class Webhook extends BaseResource
 
     /**
      * Validate webhook payload without throwing exception
-     * 
+     *
      * @param string $payload Raw webhook payload
      * @param string $signature Signature header value
      * @param string $secret Webhook secret
@@ -171,10 +171,10 @@ class Webhook extends BaseResource
 
     /**
      * Test webhook endpoint
-     * 
+     *
      * @param string $webhookId Webhook ID
-     * @param array $testEvent Test event data
-     * @return array Test response
+     * @param array<mixed> $testEvent Test event data
+     * @return array<mixed>
      */
     public function test(string $webhookId, array $testEvent = []): array
     {
@@ -183,10 +183,10 @@ class Webhook extends BaseResource
 
     /**
      * Get webhook statistics
-     * 
+     *
      * @param string $webhookId Webhook ID
-     * @param array $filters Date range and other filters
-     * @return array Statistics data
+     * @param array{date_from?: string, date_to?: string} $filters
+     * @return array<mixed>
      */
     public function getStatistics(string $webhookId, array $filters = []): array
     {
@@ -195,9 +195,9 @@ class Webhook extends BaseResource
 
     /**
      * Pause webhook delivery
-     * 
+     *
      * @param string $webhookId Webhook ID
-     * @return array Update response
+     * @return array<mixed>
      */
     public function pause(string $webhookId): array
     {
@@ -206,9 +206,9 @@ class Webhook extends BaseResource
 
     /**
      * Resume webhook delivery
-     * 
+     *
      * @param string $webhookId Webhook ID
-     * @return array Update response
+     * @return array<mixed>
      */
     public function resume(string $webhookId): array
     {

@@ -22,15 +22,14 @@ class Client
     private Authenticator $authenticator;
     private LoggerInterface $logger;
 
-    // Resources
     private ?Payment $payment = null;
     private ?Transfer $transfer = null;
     private ?Verification $verification = null;
     private ?Webhook $webhook = null;
 
     /**
-     * @param string|array $apiKey API key or configuration array
-     * @param array $options Additional options
+     * @param string|array{api_key: string, api_secret?: string, sandbox?: bool, timeout?: int, retries?: int, debug?: bool, headers?: array<string, string>, api_version?: string, base_url?: string, logger?: LoggerInterface} $apiKey
+     * @param array{sandbox?: bool, timeout?: int, retries?: int, debug?: bool, headers?: array<string, string>, api_version?: string, base_url?: string, api_secret?: string, logger?: LoggerInterface} $options
      */
     public function __construct(string|array $apiKey, array $options = [])
     {
@@ -41,9 +40,6 @@ class Client
         $this->authenticator = new Authenticator($this->config, $this->httpClient, $this->logger);
     }
 
-    /**
-     * Get Payment resource
-     */
     public function payments(): Payment
     {
         if ($this->payment === null) {
@@ -52,9 +48,6 @@ class Client
         return $this->payment;
     }
 
-    /**
-     * Get Transfer resource
-     */
     public function transfers(): Transfer
     {
         if ($this->transfer === null) {
@@ -63,9 +56,6 @@ class Client
         return $this->transfer;
     }
 
-    /**
-     * Get Verification resource
-     */
     public function verifications(): Verification
     {
         if ($this->verification === null) {
@@ -74,9 +64,6 @@ class Client
         return $this->verification;
     }
 
-    /**
-     * Get Webhook resource
-     */
     public function webhooks(): Webhook
     {
         if ($this->webhook === null) {
@@ -85,27 +72,18 @@ class Client
         return $this->webhook;
     }
 
-    /**
-     * Set logger
-     */
     public function setLogger(LoggerInterface $logger): self
     {
         $this->logger = $logger;
         return $this;
     }
 
-    /**
-     * Enable debug mode
-     */
     public function enableDebug(): self
     {
         $this->config->setDebug(true);
         return $this;
     }
 
-    /**
-     * Get configuration
-     */
     public function getConfig(): Config
     {
         return $this->config;

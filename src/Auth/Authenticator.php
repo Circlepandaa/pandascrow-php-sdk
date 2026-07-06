@@ -31,11 +31,11 @@ class Authenticator
 
     public function authenticate(): Token
     {
-        if ($this->token && !$this->token->isExpired()) {
+        if ($this->token !== null && !$this->token->isExpired()) {
             return $this->token;
         }
 
-        if ($this->config->getApiSecret()) {
+        if ($this->config->getApiSecret() !== null) {
             return $this->authenticateWithOAuth();
         }
 
@@ -46,11 +46,13 @@ class Authenticator
     {
         $this->logger->debug('Authenticating with API key');
 
-        $this->httpClient->addDefaultHeaders([
-            'X-API-Key' => $this->apiKey,
-        ]);
+        if ($this->apiKey !== null) {
+            $this->httpClient->addDefaultHeaders([
+                'X-API-Key' => $this->apiKey,
+            ]);
+        }
 
-        $this->token = new Token($this->apiKey, 0);
+        $this->token = new Token($this->apiKey ?? '', 0);
         return $this->token;
     }
 
@@ -70,8 +72,8 @@ class Authenticator
             }
 
             $this->token = new Token(
-                $response['access_token'],
-                $response['expires_in'] ?? 3600,
+                (string) $response['access_token'],
+                (int) ($response['expires_in'] ?? 3600),
                 $response['refresh_token'] ?? null
             );
 
@@ -90,7 +92,7 @@ class Authenticator
 
     public function refresh(): Token
     {
-        if (!$this->token || !$this->token->getRefreshToken()) {
+        if ($this->token === null || $this->token->getRefreshToken() === null) {
             throw new AuthenticationException('No refresh token available');
         }
 
@@ -109,8 +111,8 @@ class Authenticator
             }
 
             $this->token = new Token(
-                $response['access_token'],
-                $response['expires_in'] ?? 3600,
+                (string) $response['access_token'],
+                (int) ($response['expires_in'] ?? 3600),
                 $response['refresh_token'] ?? $this->token->getRefreshToken()
             );
 

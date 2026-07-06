@@ -20,17 +20,17 @@ class Transfer extends BaseResource
 
     /**
      * Initiate a transfer
-     * 
-     * @param array $data Transfer data (amount, recipient, currency, etc.)
+     *
+     * @param array{amount: int|float, recipient: array{type?: string, account_number: string, bank_code: string, account_name?: string}, currency: string, reference?: string, narration?: string} $data
      * @param string|null $idempotencyKey Idempotency key
-     * @return array Transfer response
+     * @return array<mixed>
      */
     public function initiate(array $data, ?string $idempotencyKey = null): array
     {
         $this->validateRequired($data, ['amount', 'recipient', 'currency']);
 
         $options = [];
-        if ($idempotencyKey) {
+        if ($idempotencyKey !== null) {
             $options['headers'] = $this->getIdempotencyHeaders($idempotencyKey);
         }
 
@@ -39,9 +39,9 @@ class Transfer extends BaseResource
 
     /**
      * Get transfer details by ID
-     * 
+     *
      * @param string $transferId Transfer ID
-     * @return array Transfer details
+     * @return array<mixed>
      */
     public function getTransfer(string $transferId): array
     {
@@ -50,9 +50,9 @@ class Transfer extends BaseResource
 
     /**
      * Get transfer by reference
-     * 
+     *
      * @param string $reference Transfer reference
-     * @return array Transfer details
+     * @return array<mixed>
      */
     public function getByReference(string $reference): array
     {
@@ -61,11 +61,11 @@ class Transfer extends BaseResource
 
     /**
      * List all transfers with pagination
-     * 
-     * @param array $filters Filter parameters
+     *
+     * @param array{status?: string, date_from?: string, date_to?: string, recipient?: string} $filters
      * @param int $page Page number
      * @param int $perPage Items per page
-     * @return array Paginated transfer list
+     * @return array{data: array<mixed>, pagination: array{total: mixed|null, page: mixed|null, per_page: mixed|null, total_pages: mixed|null}}
      */
     public function listTransfers(array $filters = [], int $page = 1, int $perPage = 20): array
     {
@@ -80,15 +80,15 @@ class Transfer extends BaseResource
 
     /**
      * Cancel a pending transfer
-     * 
+     *
      * @param string $transferId Transfer ID
      * @param string|null $reason Cancellation reason
-     * @return array Cancelled transfer
+     * @return array<mixed>
      */
     public function cancel(string $transferId, ?string $reason = null): array
     {
         $data = [];
-        if ($reason) {
+        if ($reason !== null) {
             $data['reason'] = $reason;
         }
         return $this->post('/' . $transferId . '/cancel', $data);
@@ -96,9 +96,9 @@ class Transfer extends BaseResource
 
     /**
      * Get transfer status
-     * 
+     *
      * @param string $transferId Transfer ID
-     * @return array Status information
+     * @return array<mixed>
      */
     public function getTransferStatus(string $transferId): array
     {
@@ -107,9 +107,9 @@ class Transfer extends BaseResource
 
     /**
      * Get transfer statistics
-     * 
-     * @param array $filters Date range and other filters
-     * @return array Statistics data
+     *
+     * @param array{date_from?: string, date_to?: string, currency?: string} $filters
+     * @return array<mixed>
      */
     public function getStatistics(array $filters = []): array
     {
@@ -118,21 +118,21 @@ class Transfer extends BaseResource
 
     /**
      * Create a bulk transfer (multiple recipients)
-     * 
-     * @param array $transfers Array of transfer data
+     *
+     * @param array<int, array{amount: int|float, recipient: array{account_number: string, bank_code: string, account_name?: string}, currency: string, reference?: string}> $transfers
      * @param string|null $idempotencyKey Idempotency key
-     * @return array Bulk transfer response
+     * @return array<mixed>
      */
     public function bulk(array $transfers, ?string $idempotencyKey = null): array
     {
-        if (empty($transfers)) {
+        if ($transfers === []) {
             throw new \InvalidArgumentException('Transfers array cannot be empty');
         }
 
         $data = ['transfers' => $transfers];
 
         $options = [];
-        if ($idempotencyKey) {
+        if ($idempotencyKey !== null) {
             $options['headers'] = $this->getIdempotencyHeaders($idempotencyKey);
         }
 
@@ -141,9 +141,9 @@ class Transfer extends BaseResource
 
     /**
      * Get bulk transfer status
-     * 
+     *
      * @param string $batchId Bulk transfer batch ID
-     * @return array Bulk transfer status
+     * @return array<mixed>
      */
     public function getBulkStatus(string $batchId): array
     {
@@ -152,9 +152,9 @@ class Transfer extends BaseResource
 
     /**
      * Estimate transfer fees
-     * 
-     * @param array $data Transfer data for fee estimation
-     * @return array Fee estimate
+     *
+     * @param array{amount: int|float, currency: string, recipient_country: string, recipient_type?: string} $data
+     * @return array<mixed>
      */
     public function estimateFee(array $data): array
     {
@@ -164,10 +164,10 @@ class Transfer extends BaseResource
 
     /**
      * Get transfer rate
-     * 
+     *
      * @param string $fromCurrency Source currency
      * @param string $toCurrency Target currency
-     * @return array Rate information
+     * @return array<mixed>
      */
     public function getRate(string $fromCurrency, string $toCurrency): array
     {

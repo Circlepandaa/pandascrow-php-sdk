@@ -6,6 +6,14 @@ namespace Pandascrow\Exceptions;
 
 class WebhookException extends ApiException
 {
+    /**
+     * @param string $message
+     * @param int $code
+     * @param \Throwable|null $previous
+     * @param string|null $requestId
+     * @param int|null $statusCode
+     * @param array<mixed>|null $responseData
+     */
     public function __construct(
         string $message = 'Webhook error',
         int $code = 0,
@@ -17,25 +25,16 @@ class WebhookException extends ApiException
         parent::__construct($message, $code, $previous, $requestId, $statusCode, $responseData);
     }
 
-    /**
-     * Check if this is an invalid signature error
-     */
     public function isInvalidSignature(): bool
     {
         return str_contains(strtolower($this->getMessage()), 'signature');
     }
 
-    /**
-     * Check if this is an expired payload error
-     */
     public function isExpiredPayload(): bool
     {
         return str_contains(strtolower($this->getMessage()), 'timestamp');
     }
 
-    /**
-     * Check if this is an invalid JSON error
-     */
     public function isInvalidJson(): bool
     {
         return str_contains(strtolower($this->getMessage()), 'json');

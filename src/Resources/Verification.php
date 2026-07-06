@@ -20,9 +20,9 @@ class Verification extends BaseResource
 
     /**
      * Verify a bank account
-     * 
-     * @param array $data Bank account data (account_number, bank_code, etc.)
-     * @return array Verification result
+     *
+     * @param array{account_number: string, bank_code: string} $data
+     * @return array<mixed>
      */
     public function verifyBankAccount(array $data): array
     {
@@ -32,9 +32,9 @@ class Verification extends BaseResource
 
     /**
      * Verify a mobile money account
-     * 
-     * @param array $data Mobile money data (phone_number, network, etc.)
-     * @return array Verification result
+     *
+     * @param array{phone_number: string, network: string} $data
+     * @return array<mixed>
      */
     public function verifyMobileMoney(array $data): array
     {
@@ -44,9 +44,9 @@ class Verification extends BaseResource
 
     /**
      * Verify a bank card
-     * 
-     * @param array $data Card data (pan, expiry_month, expiry_year, etc.)
-     * @return array Verification result
+     *
+     * @param array{pan: string, expiry_month: string, expiry_year: string, cvv?: string} $data
+     * @return array<mixed>
      */
     public function verifyCard(array $data): array
     {
@@ -56,10 +56,10 @@ class Verification extends BaseResource
 
     /**
      * Verify a BVN (Bank Verification Number)
-     * 
+     *
      * @param string $bvn BVN number
-     * @param array $optionalData Additional verification data
-     * @return array Verification result
+     * @param array<mixed> $optionalData Additional verification data
+     * @return array<mixed>
      */
     public function verifyBVN(string $bvn, array $optionalData = []): array
     {
@@ -69,10 +69,10 @@ class Verification extends BaseResource
 
     /**
      * Verify a phone number
-     * 
+     *
      * @param string $phone Phone number to verify
      * @param string $country Country code
-     * @return array Verification result
+     * @return array<mixed>
      */
     public function verifyPhone(string $phone, string $country): array
     {
@@ -84,9 +84,9 @@ class Verification extends BaseResource
 
     /**
      * Verify an email address
-     * 
+     *
      * @param string $email Email to verify
-     * @return array Verification result
+     * @return array<mixed>
      */
     public function verifyEmail(string $email): array
     {
@@ -95,10 +95,10 @@ class Verification extends BaseResource
 
     /**
      * Verify a VAT/TIN number
-     * 
+     *
      * @param string $tin Tax Identification Number
      * @param string $country Country code
-     * @return array Verification result
+     * @return array<mixed>
      */
     public function verifyTIN(string $tin, string $country): array
     {
@@ -110,9 +110,9 @@ class Verification extends BaseResource
 
     /**
      * Get available banks for verification
-     * 
+     *
      * @param string $country Country code
-     * @return array List of available banks
+     * @return array<mixed>
      */
     public function getBanks(string $country): array
     {
@@ -121,9 +121,9 @@ class Verification extends BaseResource
 
     /**
      * Get available networks for mobile money
-     * 
+     *
      * @param string $country Country code
-     * @return array List of available networks
+     * @return array<mixed>
      */
     public function getMobileNetworks(string $country): array
     {
@@ -132,9 +132,9 @@ class Verification extends BaseResource
 
     /**
      * Verify a business registration
-     * 
-     * @param array $data Business verification data
-     * @return array Verification result
+     *
+     * @param array{registration_number: string, country: string, business_name?: string} $data
+     * @return array<mixed>
      */
     public function verifyBusiness(array $data): array
     {
@@ -144,9 +144,9 @@ class Verification extends BaseResource
 
     /**
      * Perform a KYC verification
-     * 
-     * @param array $data KYC data (type, document_id, etc.)
-     * @return array Verification result
+     *
+     * @param array{type: string, document_id: string, document_image?: string} $data
+     * @return array<mixed>
      */
     public function verifyKYC(array $data): array
     {
@@ -156,9 +156,9 @@ class Verification extends BaseResource
 
     /**
      * Get verification status by ID
-     * 
+     *
      * @param string $verificationId Verification ID
-     * @return array Verification status
+     * @return array<mixed>
      */
     public function getVerificationStatus(string $verificationId): array
     {
@@ -167,11 +167,11 @@ class Verification extends BaseResource
 
     /**
      * List verification attempts
-     * 
-     * @param array $filters Filter parameters
+     *
+     * @param array{status?: string, type?: string, date_from?: string, date_to?: string} $filters
      * @param int $page Page number
      * @param int $perPage Items per page
-     * @return array Paginated verification list
+     * @return array{data: array<mixed>, pagination: array{total: mixed|null, page: mixed|null, per_page: mixed|null, total_pages: mixed|null}}
      */
     public function listVerifications(array $filters = [], int $page = 1, int $perPage = 20): array
     {

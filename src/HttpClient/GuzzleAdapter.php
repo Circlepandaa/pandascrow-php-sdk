@@ -25,9 +25,11 @@ class GuzzleAdapter implements ClientInterface
     private GuzzleClient $client;
     private Config $config;
     private LoggerInterface $logger;
+    /** @var array<string, string> */
     private array $lastHeaders = [];
     private int $lastStatusCode = 0;
     private ?string $authToken = null;
+    /** @var array<string, string> */
     private array $defaultHeaders = [];
 
     public function __construct(Config $config, ?LoggerInterface $logger = null)
@@ -61,13 +63,13 @@ class GuzzleAdapter implements ClientInterface
             'Content-Type' => 'application/json',
         ];
 
-        if ($config->getApiVersion()) {
+        if ($config->getApiVersion() !== null) {
             $this->defaultHeaders['X-API-Version'] = $config->getApiVersion();
         }
     }
 
     /**
-     * Retry decider for middleware
+     * @return callable(int, Request, ?Response, ?RequestException): bool
      */
     private function retryDecider(): callable
     {
@@ -86,7 +88,7 @@ class GuzzleAdapter implements ClientInterface
                 return true;
             }
 
-            if ($response) {
+            if ($response !== null) {
                 $statusCode = $response->getStatusCode();
                 if ($statusCode >= 500 || $statusCode === 429) {
                     $this->logger->debug('Retrying due to status code', ['code' => $statusCode]);
@@ -99,7 +101,7 @@ class GuzzleAdapter implements ClientInterface
     }
 
     /**
-     * Retry delay with exponential backoff
+     * @return callable(int): int
      */
     private function retryDelay(): callable
     {
@@ -108,39 +110,68 @@ class GuzzleAdapter implements ClientInterface
         };
     }
 
+    /**
+     * @param array<string, mixed> $options
+     * @return array<mixed>
+     */
     public function get(string $uri, array $options = []): array
     {
         return $this->request('GET', $uri, $options);
     }
 
+    /**
+     * @param array<mixed> $data
+     * @param array<string, mixed> $options
+     * @return array<mixed>
+     */
     public function post(string $uri, array $data = [], array $options = []): array
     {
         $options['json'] = $data;
         return $this->request('POST', $uri, $options);
     }
 
+    /**
+     * @param array<mixed> $data
+     * @param array<string, mixed> $options
+     * @return array<mixed>
+     */
     public function put(string $uri, array $data = [], array $options = []): array
     {
         $options['json'] = $data;
         return $this->request('PUT', $uri, $options);
     }
 
+    /**
+     * @param array<mixed> $data
+     * @param array<string, mixed> $options
+     * @return array<mixed>
+     */
     public function patch(string $uri, array $data = [], array $options = []): array
     {
         $options['json'] = $data;
         return $this->request('PATCH', $uri, $options);
     }
 
+    /**
+     * @param array<string, mixed> $options
+     * @return array<mixed>
+     */
     public function delete(string $uri, array $options = []): array
     {
         return $this->request('DELETE', $uri, $options);
     }
 
+    /**
+     * @param array<string, mixed> $options
+     * @return array<mixed>
+     * @throws ApiException
+     */
     public function request(string $method, string $uri, array $options = []): array
     {
+        /** @var array<string, string> $headers */
         $headers = array_merge($this->defaultHeaders, $options['headers'] ?? []);
 
-        if ($this->authToken) {
+        if ($this->authToken !== null) {
             $headers['Authorization'] = 'Bearer ' . $this->authToken;
         }
 
@@ -161,10 +192,13 @@ class GuzzleAdapter implements ClientInterface
             $response = $this->client->request($method, $uri, $options);
 
             $this->lastStatusCode = $response->getStatusCode();
-            $this->lastHeaders = $response->getHeaders();
+            /** @var array<string, string> $headers */
+            $headers = $response->getHeaders();
+            $this->lastHeaders = $headers;
 
             $responseBody = (string) $response->getBody();
-            $data = json_decode($responseBody, true);
+            /** @var array<mixed> $data */
+            $data = json_decode($responseBody, true) ?? [];
 
             if ($this->config->isDebug()) {
                 $this->logger->debug('API Response', [
@@ -179,7 +213,7 @@ class GuzzleAdapter implements ClientInterface
                 $this->handleErrorResponse($data, $this->lastStatusCode);
             }
 
-            return $data ?? [];
+            return $data;
         } catch (GuzzleException $e) {
             $this->logger->error('HTTP Request failed', [
                 'message' => $e->getMessage(),
@@ -196,9 +230,11 @@ class GuzzleAdapter implements ClientInterface
     }
 
     /**
-     * Handle error response based on status code
+     * @param array<mixed> $data
+     * @param int $statusCode
+     * @throws ApiException
      */
-    private function handleErrorResponse(?array $data, int $statusCode): void
+    private function handleErrorResponse(array $data, int $statusCode): void
     {
         $message = $data['message'] ?? $data['error'] ?? 'Unknown error occurred';
         $requestId = $data['request_id'] ?? $data['id'] ?? null;
@@ -214,19 +250,23 @@ class GuzzleAdapter implements ClientInterface
     }
 
     /**
-     * Sanitize headers for logging (remove sensitive data)
+     * @param array<string, string|array<string>> $headers
+     * @return array<string, string|array<string>>
      */
     private function sanitizeHeaders(array $headers): array
     {
         $sensitive = ['authorization', 'x-api-key', 'cookie'];
         foreach ($headers as $key => $value) {
-            if (in_array(strtolower($key), $sensitive)) {
+            if (in_array(strtolower((string) $key), $sensitive, true)) {
                 $headers[$key] = '***REDACTED***';
             }
         }
         return $headers;
     }
 
+    /**
+     * @return array<string, string>
+     */
     public function getLastHeaders(): array
     {
         return $this->lastHeaders;
@@ -252,6 +292,9 @@ class GuzzleAdapter implements ClientInterface
         $this->authToken = null;
     }
 
+    /**
+     * @param array<string, string> $headers
+     */
     public function addDefaultHeaders(array $headers): void
     {
         $this->defaultHeaders = array_merge($this->defaultHeaders, $headers);

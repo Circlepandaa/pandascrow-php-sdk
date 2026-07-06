@@ -6,8 +6,17 @@ namespace Pandascrow\Exceptions;
 
 class ValidationException extends ApiException
 {
+    /** @var array<string, list<string>> */
     private array $errors = [];
 
+    /**
+     * @param string $message
+     * @param int $code
+     * @param \Throwable|null $previous
+     * @param string|null $requestId
+     * @param int|null $statusCode
+     * @param array<mixed>|null $responseData
+     */
     public function __construct(
         string $message = 'Validation error',
         int $code = 0,
@@ -18,14 +27,15 @@ class ValidationException extends ApiException
     ) {
         parent::__construct($message, $code, $previous, $requestId, $statusCode, $responseData);
 
-        // Extract validation errors from response data
-        if ($responseData && isset($responseData['errors'])) {
-            $this->errors = $responseData['errors'];
+        if (is_array($responseData) && isset($responseData['errors']) && is_array($responseData['errors'])) {
+            /** @var array<string, list<string>> $errors */
+            $errors = $responseData['errors'];
+            $this->errors = $errors;
         }
     }
 
     /**
-     * Get validation errors
+     * @return array<string, list<string>>
      */
     public function getErrors(): array
     {
@@ -33,23 +43,21 @@ class ValidationException extends ApiException
     }
 
     /**
-     * Get errors for a specific field
+     * @param string $field
+     * @return list<string>
      */
     public function getFieldErrors(string $field): array
     {
         return $this->errors[$field] ?? [];
     }
 
-    /**
-     * Check if a field has errors
-     */
     public function hasFieldErrors(string $field): bool
     {
-        return isset($this->errors[$field]) && !empty($this->errors[$field]);
+        return isset($this->errors[$field]) && $this->errors[$field] !== [];
     }
 
     /**
-     * Get all error messages as a flat array
+     * @return list<string>
      */
     public function getAllErrorMessages(): array
     {
@@ -62,12 +70,9 @@ class ValidationException extends ApiException
         return $messages;
     }
 
-    /**
-     * Get error summary as string
-     */
     public function getErrorSummary(): string
     {
-        if (empty($this->errors)) {
+        if ($this->errors === []) {
             return $this->getMessage();
         }
 

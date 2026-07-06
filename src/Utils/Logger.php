@@ -8,8 +8,12 @@ use Pandascrow\Contracts\LoggerInterface;
 
 class Logger implements LoggerInterface
 {
+    /** @var list<callable(array<string, mixed>): void> */
     private array $handlers = [];
+    /** @var list<callable(array<string, mixed>): array<string, mixed>> */
+    private array $processors = [];
     private string $minLevel = 'debug';
+    /** @var array<string, int> */
     private array $levelPriorities = [
         'emergency' => 7,
         'alert' => 6,
@@ -26,9 +30,21 @@ class Logger implements LoggerInterface
         $this->setMinLevel($minLevel);
     }
 
+    /**
+     * @param callable(array<string, mixed>): void $handler
+     */
     public function addHandler(callable $handler): self
     {
         $this->handlers[] = $handler;
+        return $this;
+    }
+
+    /**
+     * @param callable(array<string, mixed>): array<string, mixed> $processor
+     */
+    public function addProcessor(callable $processor): self
+    {
+        $this->processors[] = $processor;
         return $this;
     }
 
@@ -81,19 +97,21 @@ class Logger implements LoggerInterface
         $this->log('debug', $message, $context);
     }
 
-    public function log($level, string $message, array $context = []): void
+    /**
+     * @param string $level
+     * @param string $message
+     * @param array<string, mixed> $context
+     */
+    public function log($level, $message, array $context = []): void
     {
+        $level = (string) $level;
+        $message = (string) $message;
+
         if (!$this->isLevelEnabled($level)) {
             return;
         }
 
-        $record = [
-            'level' => $level,
-            'message' => $this->interpolateMessage($message, $context),
-            'context' => $this->sanitizeContext($context),
-            'timestamp' => date('Y-m-d H:i:s'),
-            'channel' => 'pandascrow',
-        ];
+        $record = $this->processRecord($level, $message, $context);
 
         foreach ($this->handlers as $handler) {
             $handler($record);
@@ -108,6 +126,34 @@ class Logger implements LoggerInterface
         return $this->levelPriorities[$level] >= $this->levelPriorities[$this->minLevel];
     }
 
+    /**
+     * @param string $level
+     * @param string $message
+     * @param array<string, mixed> $context
+     * @return array<string, mixed>
+     */
+    private function processRecord(string $level, string $message, array $context): array
+    {
+        $record = [
+            'level' => $level,
+            'message' => $this->interpolateMessage($message, $context),
+            'context' => $this->sanitizeContext($context),
+            'timestamp' => date('Y-m-d H:i:s'),
+            'channel' => 'pandascrow',
+        ];
+
+        foreach ($this->processors as $processor) {
+            $record = $processor($record);
+        }
+
+        return $record;
+    }
+
+    /**
+     * @param string $message
+     * @param array<string, mixed> $context
+     * @return string
+     */
     private function interpolateMessage(string $message, array $context): string
     {
         $replace = [];
@@ -119,6 +165,10 @@ class Logger implements LoggerInterface
         return strtr($message, $replace);
     }
 
+    /**
+     * @param array<string, mixed> $context
+     * @return array<string, mixed>
+     */
     private function sanitizeContext(array $context): array
     {
         $sensitiveKeys = ['password', 'secret', 'token', 'api_key', 'authorization'];
@@ -165,11 +215,44 @@ class Logger implements LoggerInterface
 
             echo $color . $record['timestamp'] . ' [' . strtoupper($record['level']) . '] ';
             echo $record['message'];
-            if (!empty($record['context'])) {
+            if ($record['context'] !== []) {
                 echo ' ' . json_encode($record['context']);
             }
             echo $reset . "\n";
         });
+        return $this;
+    }
+
+    public function getMinLevel(): string
+    {
+        return $this->minLevel;
+    }
+
+    /**
+     * @return list<callable(array<string, mixed>): void>
+     */
+    public function getHandlers(): array
+    {
+        return $this->handlers;
+    }
+
+    /**
+     * @return list<callable(array<string, mixed>): array<string, mixed>>
+     */
+    public function getProcessors(): array
+    {
+        return $this->processors;
+    }
+
+    public function clearHandlers(): self
+    {
+        $this->handlers = [];
+        return $this;
+    }
+
+    public function clearProcessors(): self
+    {
+        $this->processors = [];
         return $this;
     }
 }
