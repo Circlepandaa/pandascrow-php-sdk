@@ -1,11 +1,12 @@
 {
-  "name": "pandascrow/pandascrow-php-sdk",
+  "name": "circlepandaa/pandascrow-php-sdk",
   "type": "library",
-  "description": "Official PHP SDK for Pandascrow Payment API",
+  "description": "Official PHP SDK for Pandascrow API",
   "keywords": [
     "pandascrow",
     "payment",
     "fintech",
+    "escrow",
     "api",
     "sdk",
     "php"
@@ -15,7 +16,7 @@
   "authors": [
     {
       "name": "Pandascrow Development Team",
-      "email": "hi@pandascrow.io",
+      "email": "support@pandascrow.io",
       "homepage": "https://pandascrow.io"
     }
   ],
@@ -71,8 +72,8 @@
   "minimum-stability": "stable",
   "prefer-stable": true,
   "support": {
-    "issues": "https://github.com/pandascrow/pandascrow-php-sdk/issues",
-    "source": "https://github.com/pandascrow/pandascrow-php-sdk",
+    "issues": "https://github.com/circlepandaa/pandascrow-php-sdk/issues",
+    "source": "https://github.com/circlepandaa/pandascrow-php-sdk",
     "docs": "https://pandascrow.readme.io/"
   }
 }
