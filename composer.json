@@ -1,5 +1,5 @@
 {
-  "name": "pandascrow/pandascrow-php",
+  "name": "pandascrow/pandascrow-php-sdk",
   "type": "library",
   "description": "Official PHP SDK for Pandascrow Payment API",
   "keywords": [
@@ -10,20 +10,19 @@
     "sdk",
     "php"
   ],
-  "homepage": "https://pandascrow.com",
+  "homepage": "https://pandascrow.io",
   "license": "MIT",
   "authors": [
     {
-      "name": "Pandascrow Team",
-      "email": "developers@pandascrow.com",
-      "homepage": "https://pandascrow.com"
+      "name": "Pandascrow Development Team",
+      "email": "hi@pandascrow.io",
+      "homepage": "https://pandascrow.io"
     }
   ],
   "require": {
     "php": "^8.1",
     "ext-json": "*",
-    "guzzlehttp/guzzle": "^7.0",
-    "psr/log": "^3.0"
+    "guzzlehttp/guzzle": "^7.0"
   },
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^3.0",
@@ -36,8 +35,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Pandascrow\\": "src/",
-      "Psr\\Log\\": "vendor/psr/log/src/"
+      "Pandascrow\\": "src/"
     }
   },
   "autoload-dev": {
@@ -73,8 +71,8 @@
   "minimum-stability": "stable",
   "prefer-stable": true,
   "support": {
-    "issues": "https://github.com/pandascrow/pandascrow-php/issues",
-    "source": "https://github.com/pandascrow/pandascrow-php",
-    "docs": "https://docs.pandascrow.com"
+    "issues": "https://github.com/pandascrow/pandascrow-php-sdk/issues",
+    "source": "https://github.com/pandascrow/pandascrow-php-sdk",
+    "docs": "https://pandascrow.readme.io/"
   }
 }
