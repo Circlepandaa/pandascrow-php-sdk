@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<psalm
+    errorLevel="2"
+    resolveFromConfigFile="true"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="https://getpsalm.org/schema/config"
+    xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+    findUnusedBaselineEntry="true"
+    findUnusedCode="true"
+>
+    <projectFiles>
+        <directory name="src" />
+        <ignoreFiles>
+            <directory name="vendor" />
+        </ignoreFiles>
+    </projectFiles>
+
+    <issueHandlers>
+        <LessSpecificReturnType errorLevel="info" />
+        <DeprecatedMethod errorLevel="info" />
+        <DeprecatedProperty errorLevel="info" />
+        <DeprecatedClass errorLevel="info" />
+        <DeprecatedConstant errorLevel="info" />
+        <DeprecatedInterface errorLevel="info" />
+        <DeprecatedTrait errorLevel="info" />
+        <InternalMethod errorLevel="info" />
+        <InternalProperty errorLevel="info" />
+        <InternalClass errorLevel="info" />
+        <MissingClosureReturnType errorLevel="info" />
+        <MissingReturnType errorLevel="info" />
+        <MissingPropertyType errorLevel="info" />
+        <InvalidDocblock errorLevel="info" />
+        <MisplacedRequiredParam errorLevel="info" />
+        <PossiblyUnusedMethod errorLevel="info" />
+        <PossiblyUnusedProperty errorLevel="info" />
+        <PossiblyUnusedReturnValue errorLevel="info" />
+        <UnusedParam errorLevel="info" />
+        <UnusedProperty errorLevel="info" />
+        <UnusedReturnValue errorLevel="info" />
+        <PropertyNotSetInConstructor errorLevel="info" />
+    </issueHandlers>
+
+    <plugins>
+        <pluginClass class="Psalm\PhpUnitPlugin\Plugin" />
+    </plugins>
+</psalm>

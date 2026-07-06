@@ -1,0 +1,53 @@
+# Composer
+/vendor/
+composer.lock
+composer.phar
+
+# PHPUnit
+/.phpunit.cache
+/coverage/
+/logs/
+/build/
+
+# PHPStan
+/phpstan.neon
+/phpstan-baseline.neon
+
+# Psalm
+/psalm-baseline.xml
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+/.idea/
+/.vscode/
+*.code-workspace
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+*.log.*
+
+# Cache
+/.cache/
+/tmp/
+
+# Coverage reports
+coverage/
+clover.xml
+junit.xml
+
+# Build artifacts
+*.phar
+*.tar.gz
+*.zip
+
+# OS files
+Thumbs.db
+Desktop.ini
