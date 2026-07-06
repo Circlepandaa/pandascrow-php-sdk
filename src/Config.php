@@ -20,7 +20,7 @@ class Config
     private ?string $apiVersion;
 
     /**
-     * @param string|array{api_key: string, api_secret?: string, sandbox?: bool, timeout?: int, retries?: int, debug?: bool, headers?: array<string, string>, api_version?: string, base_url?: string} $apiKey
+     * @param string|array{api_key?: string, api_secret?: string, sandbox?: bool, timeout?: int, retries?: int, debug?: bool, headers?: array<string, string>, api_version?: string, base_url?: string} $apiKey
      * @param array{sandbox?: bool, timeout?: int, retries?: int, debug?: bool, headers?: array<string, string>, api_version?: string, base_url?: string, api_secret?: string} $options
      */
     public function __construct(string|array $apiKey, array $options = [])
