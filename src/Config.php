@@ -55,7 +55,7 @@ class Config
      */
     private function parseConfigArray(array $config): void
     {
-        if (empty($config['api_key'])) {
+        if (!isset($config['api_key']) || $config['api_key'] === '') {
             throw new ConfigurationException('API key is required');
         }
         $this->apiKey = $config['api_key'];

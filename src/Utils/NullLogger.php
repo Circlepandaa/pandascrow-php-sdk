@@ -57,7 +57,7 @@ class NullLogger implements LoggerInterface
     public function debug(string $message, array $context = []): void {}
 
     /**
-     * @param string $level
+     * @param mixed $level
      * @param string $message
      * @param array<mixed> $context
      */

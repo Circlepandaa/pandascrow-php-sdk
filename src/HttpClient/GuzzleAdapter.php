@@ -69,7 +69,7 @@ class GuzzleAdapter implements ClientInterface
     }
 
     /**
-     * @return callable(int, Request, ?Response, ?RequestException): bool
+     * @return callable(int, Request, ?Response, ?\Exception): bool
      */
     private function retryDecider(): callable
     {
@@ -77,12 +77,13 @@ class GuzzleAdapter implements ClientInterface
             int $retries,
             Request $request,
             ?Response $response = null,
-            ?RequestException $exception = null
+            ?\Exception $exception = null
         ): bool {
             if ($retries >= $this->config->getRetries()) {
                 return false;
             }
 
+            // Check if exception is a connection error
             if ($exception instanceof ConnectException) {
                 $this->logger->debug('Retrying due to connection error');
                 return true;
