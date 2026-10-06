@@ -1,79 +1,9 @@
 {
-  "name": "circlepandaa/pandascrow-php-sdk",
+  "name": "pandascrow/pandascrow-php",
+  "description": "Minimal PHP SDK for the Pandascrow v3 API (escrow, wallets, payouts, KYC, invoices, payment links)",
   "type": "library",
-  "description": "Official PHP SDK for Pandascrow API",
-  "keywords": [
-    "pandascrow",
-    "payment",
-    "fintech",
-    "escrow",
-    "api",
-    "sdk",
-    "php"
-  ],
-  "homepage": "https://pandascrow.io",
   "license": "MIT",
-  "authors": [
-    {
-      "name": "Precious Tom",
-      "email": "tom@pandascrow.io",
-      "homepage": "https://pandascrow.io"
-    }
-  ],
-  "require": {
-    "php": "^8.1",
-    "ext-json": "*",
-    "guzzlehttp/guzzle": "^7.0"
-  },
-  "require-dev": {
-    "friendsofphp/php-cs-fixer": "^3.0",
-    "mockery/mockery": "^1.6",
-    "phpstan/extension-installer": "^1.0",
-    "phpstan/phpstan": "^1.0",
-    "phpstan/phpstan-strict-rules": "^1.0",
-    "phpunit/phpunit": "^10.0",
-    "vimeo/psalm": "^5.0"
-  },
-  "autoload": {
-    "psr-4": {
-      "Pandascrow\\": "src/"
-    }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "Pandascrow\\Tests\\": "tests/"
-    }
-  },
-  "scripts": {
-    "test": "phpunit",
-    "test-coverage": "phpunit --coverage-html coverage",
-    "phpstan": "phpstan analyse src --level=8",
-    "phpstan-baseline": "phpstan analyse src --level=8 --generate-baseline",
-    "php-cs-fixer": "php-cs-fixer fix src --dry-run --diff",
-    "php-cs-fixer-fix": "php-cs-fixer fix src",
-    "psalm": "psalm",
-    "psalm-baseline": "psalm --set-baseline=psalm-baseline.xml",
-    "check": [
-      "@php-cs-fixer",
-      "@phpstan",
-      "@psalm",
-      "@test"
-    ]
-  },
-  "config": {
-    "sort-packages": true,
-    "optimize-autoloader": true,
-    "allow-plugins": {
-      "phpstan/extension-installer": true,
-      "dealerdirect/phpcodesniffer-composer-installer": true,
-      "php-http/discovery": true
-    }
-  },
-  "minimum-stability": "stable",
-  "prefer-stable": true,
-  "support": {
-    "issues": "https://github.com/circlepandaa/pandascrow-php-sdk/issues",
-    "source": "https://github.com/circlepandaa/pandascrow-php-sdk",
-    "docs": "https://pandascrow.readme.io/"
-  }
+  "require": { "php": ">=7.4", "ext-curl": "*", "ext-json": "*",
+    "vlucas/phpdotenv": "^5.7" },
+  "autoload": { "psr-4": { "Pandascrow\\": "src/" } }
 }

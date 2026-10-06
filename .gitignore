@@ -51,3 +51,6 @@ junit.xml
 # OS files
 Thumbs.db
 Desktop.ini
+
+# Entry points
+index.php

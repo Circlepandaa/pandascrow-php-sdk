@@ -1,91 +1,105 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Pandascrow;
 
-use Pandascrow\Auth\Authenticator;
-use Pandascrow\Contracts\LoggerInterface;
-use Pandascrow\Exceptions\ConfigurationException;
-use Pandascrow\HttpClient\ClientInterface;
-use Pandascrow\HttpClient\GuzzleAdapter;
-use Pandascrow\Resources\Payment;
-use Pandascrow\Resources\Transfer;
-use Pandascrow\Resources\Verification;
-use Pandascrow\Resources\Webhook;
-use Pandascrow\Utils\NullLogger;
+use Pandascrow\Resources\{Auth, Escrow, Wallet, Bank, VirtualAccount, Invoice, PaymentLink, Kyc};
 
 class Client
 {
-    private Config $config;
-    private ClientInterface $httpClient;
-    private Authenticator $authenticator;
-    private LoggerInterface $logger;
+    const SANDBOX = 'https://sandbox.pandascrow.io';
+    const LIVE    = 'https://api.pandascrow.io';
 
-    private ?Payment $payment = null;
-    private ?Transfer $transfer = null;
-    private ?Verification $verification = null;
-    private ?Webhook $webhook = null;
+    private $apiKey;
+    private $baseUrl;
+    private $timeout;
+
+    public $auth, $escrow, $wallet, $bank, $virtualAccounts, $invoices, $paymentLinks, $kyc;
 
     /**
-     * @param string|array{api_key: string, api_secret?: string, sandbox?: bool, timeout?: int, retries?: int, debug?: bool, headers?: array<string, string>, api_version?: string, base_url?: string, logger?: LoggerInterface} $apiKey
-     * @param array{sandbox?: bool, timeout?: int, retries?: int, debug?: bool, headers?: array<string, string>, api_version?: string, base_url?: string, api_secret?: string, logger?: LoggerInterface} $options
+     * @param string $apiKey  Your API key from the dashboard (sent in the `Token` header).
+     * @param array  $options ['sandbox' => bool (default true), 'base_url' => string, 'timeout' => int]
      */
-    public function __construct(string|array $apiKey, array $options = [])
+    public function __construct(string $apiKey, array $options = [])
     {
-        $this->config = new Config($apiKey, $options);
-        $this->logger = $options['logger'] ?? new NullLogger();
+        $this->apiKey  = $apiKey;
+        $sandbox       = $options['sandbox'] ?? true;
+        $this->baseUrl = rtrim($options['base_url'] ?? ($sandbox ? self::SANDBOX : self::LIVE), '/');
+        $this->timeout = $options['timeout'] ?? 30;
 
-        $this->httpClient = new GuzzleAdapter($this->config, $this->logger);
-        $this->authenticator = new Authenticator($this->config, $this->httpClient, $this->logger);
+        $this->auth            = new Auth($this);
+        $this->escrow          = new Escrow($this);
+        $this->wallet          = new Wallet($this);
+        $this->bank            = new Bank($this);
+        $this->virtualAccounts = new VirtualAccount($this);
+        $this->invoices        = new Invoice($this);
+        $this->paymentLinks    = new PaymentLink($this);
+        $this->kyc             = new Kyc($this);
     }
 
-    public function payments(): Payment
+    public function get(string $path, array $query = []): array
     {
-        if ($this->payment === null) {
-            $this->payment = new Payment($this->httpClient, $this->authenticator, $this->config, $this->logger);
+        return $this->request('GET', $path, $query);
+    }
+
+    public function post(string $path, array $body = [], array $query = []): array
+    {
+        return $this->request('POST', $path, $query, $body);
+    }
+
+    /**
+     * Low-level call; also your escape hatch for endpoints without a helper.
+     * Returns the `data` object of the Pandascrow envelope; throws PandascrowException on failure.
+     */
+    public function request(string $method, string $path, array $query = [], ?array $body = null): array
+    {
+        $url = $this->baseUrl . '/' . ltrim($path, '/');
+        if ($query) {
+            $url .= '?' . http_build_query($query);
         }
-        return $this->payment;
-    }
 
-    public function transfers(): Transfer
-    {
-        if ($this->transfer === null) {
-            $this->transfer = new Transfer($this->httpClient, $this->authenticator, $this->config, $this->logger);
+        $ch = curl_init($url);
+        $headers = ['Token: ' . $this->apiKey, 'Accept: application/json'];
+        $opts = [
+            CURLOPT_CUSTOMREQUEST  => $method,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => $this->timeout,
+        ];
+        if ($body !== null) {
+            $headers[] = 'Content-Type: application/json';
+            $opts[CURLOPT_POSTFIELDS] = json_encode($body);
         }
-        return $this->transfer;
-    }
+        $opts[CURLOPT_HTTPHEADER] = $headers;
+        curl_setopt_array($ch, $opts);
 
-    public function verifications(): Verification
-    {
-        if ($this->verification === null) {
-            $this->verification = new Verification($this->httpClient, $this->authenticator, $this->config, $this->logger);
+        $raw    = curl_exec($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err    = curl_error($ch);
+        curl_close($ch);
+
+        if ($raw === false) {
+            throw new PandascrowException('Network error: ' . $err);
         }
-        return $this->verification;
-    }
 
-    public function webhooks(): Webhook
-    {
-        if ($this->webhook === null) {
-            $this->webhook = new Webhook($this->httpClient, $this->authenticator, $this->config, $this->logger);
+        $json = json_decode($raw, true);
+        if (!is_array($json)) {
+            throw new PandascrowException('Invalid JSON response (HTTP ' . $status . ')', $status);
         }
-        return $this->webhook;
-    }
 
-    public function setLogger(LoggerInterface $logger): self
-    {
-        $this->logger = $logger;
-        return $this;
-    }
+        $ok = ($json['status'] ?? false) === true || ($json['status'] ?? null) === 'true';
+        if ($status >= 400 || !$ok) {
+            $data = is_array($json['data'] ?? null) ? $json['data'] : [];
+            throw new PandascrowException(
+                $data['message'] ?? $json['message'] ?? 'Request failed',
+                $status,
+                $data['doc_url'] ?? null,
+                $json
+            );
+        }
 
-    public function enableDebug(): self
-    {
-        $this->config->setDebug(true);
-        return $this;
-    }
-
-    public function getConfig(): Config
-    {
-        return $this->config;
+        $data = $json['data'] ?? [];
+        // Some endpoints (e.g. bank transfers) return extra top-level keys like `metadata`.
+        if (is_array($data) && isset($json['metadata'])) {
+            $data['_metadata'] = $json['metadata'];
+        }
+        return is_array($data) ? $data : ['value' => $data];
     }
 }
