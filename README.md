@@ -24,6 +24,7 @@ $escrow = $ps->escrow->createOnetime([
     'initiator_id'   => $uuid,
     'initiator_role' => 'seller',       // buyer | seller | broker
     'title'          => 'Apartment 4B rent',
+    'description'    => '12-month rent, 12 Admiralty Way',
     'currency'       => 'NGN',
     'amount'         => 350000,
     'buyer_details'  => ['name' => 'Tenant', 'email' => 'tenant@example.com'],
@@ -92,7 +93,7 @@ $ps->request('POST', '/escrow/recurring/update', [], ['uuid' => $uuid, 'escrow_i
 // Milestone escrow, paid stage by stage
 $ps->escrow->createMilestone([
     'uuid' => $uuid, 'initiator_id' => $uuid, 'initiator_role' => 'buyer',
-    'title' => 'Website build', 'currency' => 'NGN',
+    'title' => 'Website build', 'description' => 'Company website', 'currency' => 'NGN',
     'seller_details' => ['name' => 'Dev Studio', 'email' => 'studio@example.com'],
     'deposit_option' => 'milestone',
     'milestones' => [

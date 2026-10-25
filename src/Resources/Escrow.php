@@ -26,10 +26,10 @@ class Escrow extends Resource
     /**
      * One-time escrow.
      *
-     * Required: uuid, initiator_id, initiator_role (buyer|seller|broker), title, currency, amount,
+     * Required: uuid, initiator_id, initiator_role (buyer|seller|broker), title, description, currency, amount,
      * and the counterparty: seller_details (if you are the buyer) or buyer_details (if you are the
      * seller), or both for brokers. Each is ['name' => , 'email' => , 'phone' => ].
-     * Optional: description, inspection_period, delivery_date, who_pay_fees (buyer|seller|both),
+     * Optional: inspection_period, delivery_date, who_pay_fees (buyer|seller|both),
      * payout (seller's bank: payout_type, bank_code, account_number, account_name, ...),
      * payment_gateway, callback_url, idempotency_key, metadata.
      *
@@ -59,7 +59,7 @@ class Escrow extends Resource
     /**
      * Recurring (group contribution) escrow.
      *
-     * Required: uuid, title, currency, amount and
+     * Required: uuid, title, description, currency, amount and
      * cycle: ['cycle_interval', 'minimum_contributors', 'maximum_contributors',
      *         'due_day_of_month', 'expected_amount', 'due_date'].
      * Optional: contributors [['name' => , 'email' => , 'amount' => ], ...], metadata.
