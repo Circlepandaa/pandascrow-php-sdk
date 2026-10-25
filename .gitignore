@@ -54,3 +54,5 @@ Desktop.ini
 
 # Entry points
 index.php
+# PHPUnit result cache
+.phpunit.result.cache

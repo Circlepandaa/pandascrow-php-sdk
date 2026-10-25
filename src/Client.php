@@ -1,105 +1,252 @@
 <?php
+
 namespace Pandascrow;
 
-use Pandascrow\Resources\{Auth, Escrow, Wallet, Bank, VirtualAccount, Invoice, PaymentLink, Kyc};
+use Pandascrow\Http\CurlTransport;
+use Pandascrow\Http\Transport;
+use Pandascrow\Resources\Auth;
+use Pandascrow\Resources\Bank;
+use Pandascrow\Resources\Escrow;
+use Pandascrow\Resources\Invoice;
+use Pandascrow\Resources\Kyc;
+use Pandascrow\Resources\PaymentLink;
+use Pandascrow\Resources\Payout;
+use Pandascrow\Resources\VirtualAccount;
+use Pandascrow\Resources\Wallet;
 
+/**
+ * Entry point for the Pandascrow v3 API.
+ *
+ *   $ps = new Pandascrow\Client('pk_test_xxx');                      // sandbox
+ *   $ps = new Pandascrow\Client('pk_live_xxx', ['sandbox' => false]); // live
+ *
+ *   $escrow = $ps->escrow->createOnetime([...]);
+ */
 class Client
 {
-    const SANDBOX = 'https://sandbox.pandascrow.io';
-    const LIVE    = 'https://api.pandascrow.io';
+    public const VERSION = '1.1.0';
+    public const SANDBOX = 'https://sandbox.pandascrow.io';
+    public const LIVE    = 'https://api.pandascrow.io';
 
+    /** @var Auth */
+    public $auth;
+    /** @var Escrow */
+    public $escrow;
+    /** @var Wallet */
+    public $wallet;
+    /** @var Bank */
+    public $bank;
+    /** @var Payout */
+    public $payouts;
+    /** @var VirtualAccount */
+    public $virtualAccounts;
+    /** @var Invoice */
+    public $invoices;
+    /** @var PaymentLink */
+    public $paymentLinks;
+    /** @var Kyc */
+    public $kyc;
+
+    /** @var string */
     private $apiKey;
+    /** @var string */
     private $baseUrl;
+    /** @var int */
     private $timeout;
-
-    public $auth, $escrow, $wallet, $bank, $virtualAccounts, $invoices, $paymentLinks, $kyc;
+    /** @var Transport */
+    private $transport;
+    /** @var array<int, string> */
+    private $extraHeaders = [];
 
     /**
-     * @param string $apiKey  Your API key from the dashboard (sent in the `Token` header).
-     * @param array  $options ['sandbox' => bool (default true), 'base_url' => string, 'timeout' => int]
+     * @param string $apiKey Public key of your application (Dashboard → Developers). Sent as the `Token` header.
+     * @param array{
+     *     sandbox?: bool,
+     *     base_url?: string,
+     *     timeout?: int,
+     *     connect_timeout?: int,
+     *     headers?: array<string, string>,
+     *     transport?: Transport
+     * } $options
+     *   - sandbox:  true (default) → https://sandbox.pandascrow.io, false → https://api.pandascrow.io
+     *   - base_url: override the API host entirely (e.g. a local API during development)
+     *   - timeout / connect_timeout: seconds (default 30 / 10)
+     *   - headers:  extra headers sent on every request
+     *   - transport: custom Http\Transport (logging, retries, test fakes)
      */
     public function __construct(string $apiKey, array $options = [])
     {
-        $this->apiKey  = $apiKey;
-        $sandbox       = $options['sandbox'] ?? true;
-        $this->baseUrl = rtrim($options['base_url'] ?? ($sandbox ? self::SANDBOX : self::LIVE), '/');
-        $this->timeout = $options['timeout'] ?? 30;
+        $apiKey = trim($apiKey);
+        if ($apiKey === '') {
+            throw new \InvalidArgumentException('A Pandascrow API key is required. Find it in your dashboard under Developers.');
+        }
+
+        $sandbox         = isset($options['sandbox']) ? (bool) $options['sandbox'] : true;
+        $this->apiKey    = $apiKey;
+        $this->baseUrl   = rtrim(isset($options['base_url']) ? (string) $options['base_url'] : ($sandbox ? self::SANDBOX : self::LIVE), '/');
+        $this->timeout   = isset($options['timeout']) ? (int) $options['timeout'] : 30;
+        $this->transport = isset($options['transport']) && $options['transport'] instanceof Transport
+            ? $options['transport']
+            : new CurlTransport(isset($options['connect_timeout']) ? (int) $options['connect_timeout'] : 10);
+
+        foreach (($options['headers'] ?? []) as $name => $value) {
+            $this->extraHeaders[] = $name . ': ' . $value;
+        }
 
         $this->auth            = new Auth($this);
         $this->escrow          = new Escrow($this);
         $this->wallet          = new Wallet($this);
         $this->bank            = new Bank($this);
+        $this->payouts         = new Payout($this);
         $this->virtualAccounts = new VirtualAccount($this);
         $this->invoices        = new Invoice($this);
         $this->paymentLinks    = new PaymentLink($this);
         $this->kyc             = new Kyc($this);
     }
 
+    public function getBaseUrl(): string
+    {
+        return $this->baseUrl;
+    }
+
+    /**
+     * @param array<string, mixed> $query
+     * @return array<string, mixed>
+     */
     public function get(string $path, array $query = []): array
     {
         return $this->request('GET', $path, $query);
     }
 
+    /**
+     * @param array<string, mixed> $body
+     * @param array<string, mixed> $query
+     * @return array<string, mixed>
+     */
     public function post(string $path, array $body = [], array $query = []): array
     {
         return $this->request('POST', $path, $query, $body);
     }
 
     /**
-     * Low-level call; also your escape hatch for endpoints without a helper.
-     * Returns the `data` object of the Pandascrow envelope; throws PandascrowException on failure.
+     * Low-level call, and your escape hatch for endpoints without a helper:
+     *
+     *   $ps->request('GET', '/clients', ['uuid' => $uuid]);
+     *
+     * Returns the `data` object of the Pandascrow response.
+     *
+     * @param array<string, mixed>      $query
+     * @param array<string, mixed>|null $body
+     * @return array<string, mixed>
+     *
+     * @throws PandascrowException
      */
     public function request(string $method, string $path, array $query = [], ?array $body = null): array
     {
-        $url = $this->baseUrl . '/' . ltrim($path, '/');
+        $method = strtoupper($method);
+        $url    = $this->baseUrl . '/' . ltrim($path, '/');
+
+        $query = self::clean($query);
         if ($query) {
-            $url .= '?' . http_build_query($query);
+            $url .= (strpos($url, '?') === false ? '?' : '&') . http_build_query($query);
         }
 
-        $ch = curl_init($url);
-        $headers = ['Token: ' . $this->apiKey, 'Accept: application/json'];
-        $opts = [
-            CURLOPT_CUSTOMREQUEST  => $method,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => $this->timeout,
-        ];
-        if ($body !== null) {
+        $headers = array_merge([
+            'Token: ' . $this->apiKey,
+            'Accept: application/json',
+            'User-Agent: pandascrow-php/' . self::VERSION . ' (PHP ' . PHP_VERSION . ')',
+        ], $this->extraHeaders);
+
+        $payload = null;
+        if ($body !== null && $method !== 'GET') {
+            $payload = json_encode(self::clean($body), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            if ($payload === false) {
+                throw new PandascrowException('Could not encode request body as JSON: ' . json_last_error_msg());
+            }
             $headers[] = 'Content-Type: application/json';
-            $opts[CURLOPT_POSTFIELDS] = json_encode($body);
-        }
-        $opts[CURLOPT_HTTPHEADER] = $headers;
-        curl_setopt_array($ch, $opts);
-
-        $raw    = curl_exec($ch);
-        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $err    = curl_error($ch);
-        curl_close($ch);
-
-        if ($raw === false) {
-            throw new PandascrowException('Network error: ' . $err);
         }
 
-        $json = json_decode($raw, true);
-        if (!is_array($json)) {
-            throw new PandascrowException('Invalid JSON response (HTTP ' . $status . ')', $status);
-        }
+        $response = $this->transport->send($method, $url, $headers, $payload, $this->timeout);
 
-        $ok = ($json['status'] ?? false) === true || ($json['status'] ?? null) === 'true';
-        if ($status >= 400 || !$ok) {
-            $data = is_array($json['data'] ?? null) ? $json['data'] : [];
+        return self::parse((int) $response['status'], (string) $response['body']);
+    }
+
+    /**
+     * Turn a raw HTTP response into the `data` array, or throw.
+     *
+     * @return array<string, mixed>
+     * @throws PandascrowException
+     */
+    public static function parse(int $status, string $raw): array
+    {
+        $json = self::decode($raw);
+
+        if ($json === null) {
+            $snippet = trim(substr(strip_tags($raw), 0, 200));
             throw new PandascrowException(
-                $data['message'] ?? $json['message'] ?? 'Request failed',
+                'Unexpected response from Pandascrow (HTTP ' . $status . ')' . ($snippet !== '' ? ': ' . $snippet : ''),
+                $status
+            );
+        }
+
+        $flag = $json['status'] ?? null;
+        $ok   = $flag === true || $flag === 'true' || $flag === 1 || $flag === 'success';
+
+        if ($status >= 400 || !$ok) {
+            $data    = (isset($json['data']) && is_array($json['data'])) ? $json['data'] : [];
+            $message = $data['message'] ?? $json['message'] ?? $data['error'] ?? $json['error'] ?? null;
+            throw new PandascrowException(
+                is_string($message) && $message !== '' ? $message : 'Pandascrow request failed (HTTP ' . $status . ')',
                 $status,
-                $data['doc_url'] ?? null,
+                isset($data['doc_url']) && is_string($data['doc_url']) ? $data['doc_url'] : null,
                 $json
             );
         }
 
-        $data = $json['data'] ?? [];
-        // Some endpoints (e.g. bank transfers) return extra top-level keys like `metadata`.
-        if (is_array($data) && isset($json['metadata'])) {
-            $data['_metadata'] = $json['metadata'];
+        if (array_key_exists('data', $json)) {
+            return is_array($json['data']) ? $json['data'] : ['value' => $json['data']];
         }
-        return is_array($data) ? $data : ['value' => $data];
+
+        // Some endpoints answer { "status": true, "message": "..." } with no data object
+        unset($json['status']);
+        return $json;
+    }
+
+    /**
+     * Decode JSON, tolerating PHP notices/HTML printed before the JSON body.
+     *
+     * @return array<string, mixed>|null
+     */
+    private static function decode(string $raw): ?array
+    {
+        $raw  = trim($raw);
+        $json = json_decode($raw, true);
+        if (is_array($json)) {
+            return $json;
+        }
+
+        $start = strpos($raw, '{');
+        $end   = strrpos($raw, '}');
+        if ($start !== false && $end !== false && $end > $start) {
+            $json = json_decode(substr($raw, $start, $end - $start + 1), true);
+            if (is_array($json)) {
+                return $json;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Drop null values so optional arguments are simply not sent.
+     *
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    private static function clean(array $data): array
+    {
+        return array_filter($data, static function ($v) {
+            return $v !== null;
+        });
     }
 }

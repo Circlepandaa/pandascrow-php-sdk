@@ -1,9 +1,54 @@
 {
-  "name": "pandascrow/pandascrow-php",
-  "description": "Minimal PHP SDK for the Pandascrow v3 API (escrow, wallets, payouts, KYC, invoices, payment links)",
-  "type": "library",
-  "license": "MIT",
-  "require": { "php": ">=7.4", "ext-curl": "*", "ext-json": "*",
-    "vlucas/phpdotenv": "^5.7" },
-  "autoload": { "psr-4": { "Pandascrow\\": "src/" } }
+    "name": "circlepandaa/pandascrow-php-sdk",
+    "description": "Official PHP SDK for the Pandascrow v3 API: escrow, wallets, payouts, bank transfers, virtual accounts, invoices, payment links, KYC and webhooks.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "pandascrow",
+        "escrow",
+        "payments",
+        "nigeria",
+        "fintech",
+        "api",
+        "sdk",
+        "webhooks"
+    ],
+    "homepage": "https://pandascrow.io",
+    "authors": [
+        {
+            "name": "Pandascrow Team",
+            "email": "hi@pandascrow.io",
+            "homepage": "https://pandascrow.io"
+        }
+    ],
+    "support": {
+        "email": "hi@pandascrow.io",
+        "docs": "https://pandascrow.readme.io/",
+        "issues": "https://github.com/Circlepandaa/pandascrow-php-sdk/issues",
+        "source": "https://github.com/Circlepandaa/pandascrow-php-sdk"
+    },
+    "require": {
+        "php": ">=7.4",
+        "ext-curl": "*",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.6 || ^10.5 || ^11.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Pandascrow\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Pandascrow\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
+    },
+    "config": {
+        "sort-packages": true
+    }
 }
